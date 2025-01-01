@@ -1,0 +1,15 @@
+[package]
+name = "socrates"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version= "1.42.0", features = ["full"] }
+serde = { version = "1.0.216" , features = ["derive"] }
+serde_json = "1.0.134"
+hyper = { version = "1.5.2", features = ["full"] }
+http-body-util = "0.1.2"
+hyper-util = { version = "0.1.10", features = ["full"] }
+
+[lib]
+crate-type = ["lib"]
