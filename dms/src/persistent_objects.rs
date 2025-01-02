@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct Category
+pub struct Folder
 {
     pub id: u32,
     pub parent_id: u32,
@@ -9,10 +9,9 @@ pub struct Category
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Contact
+pub struct File
 {
     pub id: u32,
-    pub category_id: u32,
-    pub name: String,
-    pub phone_number: String
+    pub folder_id: u32,
+    pub name: String    
 }

@@ -1,14 +1,14 @@
 mod persistent_objects;
 mod entities;
 mod aggregate;
-mod phonebook_api;
+mod dms_api;
 
-use phonebook_api::PhonebookApi;
+use dms_api::DmsApi;
 use socrates::{error::Error, file_storage::FileStorage};
 
 #[tokio::main]
 async fn main() -> Result<(), Error>
 {
     let storage = FileStorage::new(r"phonebook\sink".into());    
-    PhonebookApi::run(storage).await
+    DmsApi::run(storage).await
 }

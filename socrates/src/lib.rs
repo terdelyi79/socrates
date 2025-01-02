@@ -3,6 +3,5 @@ pub mod event;
 pub mod file_storage;
 pub mod sink;
 pub mod storage;
-pub mod null_storage;
 pub mod api;
 pub  mod json;
