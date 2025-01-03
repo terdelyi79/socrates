@@ -10,7 +10,7 @@ use hyper_util::rt::TokioIo;
 use std::{collections::HashMap, future::Future, net::SocketAddr, sync::Arc};
 use tokio::{net::TcpListener, sync::RwLock};
 
-type Query<A> = Box<fn(aggregate: &A) -> Result<String, Error>>;
+type Query<A> = Box<fn(aggregate: &A, parameters: &HashMap<String, String>) -> Result<String, Error>>;
 
 /// A REST based API service receiving commands and queries.
 /// I uses ths underlying sink to with registered commands nd queries together
@@ -90,9 +90,18 @@ where
         let queries = self.queries.clone();
 
         async move {
-            
+            let parameters: HashMap<String, String> = request
+                .uri()
+                .query()
+                .map(|v| {
+                    url::form_urlencoded::parse(v.as_bytes())
+                        .into_owned()
+                        .collect()
+                })
+                .unwrap_or_default();
+
             // Extract all needed data from te request
-            let url = request.uri().to_string();
+            let url: String = request.uri().path().into();
             let method = request.method().clone();
             let bytes = request.collect().await?.to_bytes();
             let body = String::from_utf8(bytes.to_vec())?;
@@ -105,24 +114,23 @@ where
 
                     match query {
                         Some(query) => {
-                            
                             // Get agregate for the sink
                             let sink = sink.read().await;
                             let aggregate = sink.aggregate();
                             let aggregate = aggregate.read().await;
-                            
+
                             // Call the query
-                            let result = query(&aggregate);
-                            
+                            let result = query(&aggregate, &parameters);
+
                             // Return result
                             Ok(Response::new(Full::new(Bytes::from(result?))))
-                        },
+                        }
                         None => {
-                            
                             // If query does not exist, then return an "Unknown Query" error message with status code 404
-                            let mut response = Response::new(Full::new(Bytes::from("Unknown query")));
+                            let mut response =
+                                Response::new(Full::new(Bytes::from("Unknown query")));
                             *response.status_mut() = StatusCode::NOT_FOUND;
-                            
+
                             Ok(response)
                         }
                     }
@@ -130,7 +138,6 @@ where
 
                 // POST method is used for commands
                 Method::POST => {
-
                     // Add the even to the sink
                     let event = Arc::new(Event::Text(url[1..].into(), body));
                     let mut sink = sink.write().await;
@@ -140,15 +147,14 @@ where
                     Ok(Response::new(Full::new(Bytes::from(""))))
                 }
                 _ => {
-                            
                     // Only GET and POST methods are supported
-                    let mut response = Response::new(Full::new(Bytes::from("Method is not supported")));
+                    let mut response =
+                        Response::new(Full::new(Bytes::from("Method is not supported")));
                     *response.status_mut() = StatusCode::BAD_REQUEST;
-                    
+
                     Ok(response)
                 }
             }
         }
     }
-    
 }

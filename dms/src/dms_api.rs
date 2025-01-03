@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{collections::HashMap, net::SocketAddr};
 
 use socrates::{
     api::Api,
@@ -43,7 +43,7 @@ impl DmsApi {
 
     // ********************************* Queries ********************************** //
 
-    fn get_folder_tree(aggregate: &Aggregate) -> Result<String, Error> {
+    fn get_folder_tree(aggregate: &Aggregate,  _: &HashMap<String, String>) -> Result<String, Error> {
         to_json(aggregate.get_folder_tree())
     }
 }
