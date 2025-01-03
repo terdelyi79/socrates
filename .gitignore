@@ -1,4 +1,4 @@
 /dms/sink
 /target
 /Cargo.lock
-**/.vscode
+/socrates/.vscode
