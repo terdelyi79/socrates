@@ -4,12 +4,13 @@ use crate::{error::Error, event::Event, storage::Storage};
 
 const BUFFER_CAPACITY: usize = 1000000;
 
-pub struct FileStorage
+/// A basic storage implementation of development and demonstrations only.
+pub struct FileSystemStorage
 {
     path: String
 }
 
-impl FileStorage
+impl FileSystemStorage
 {
     pub fn new(path: String) -> Self
     {
@@ -17,23 +18,29 @@ impl FileStorage
     }
 }
 
-impl Storage for FileStorage
+impl Storage for FileSystemStorage
 {
+    /// Initialize the storage, and returns an iterator for the events already stored in the storage.
     fn init(&self) -> Box<dyn Iterator<Item = Result<(u32, Arc<Event>), Error>>>
     {
         Box::new(FileStorageIterator::new(self.path.clone()))
     }
 
+    /// Add an event to the storage.
     async fn add(&mut self, event: Arc<Event>, id: u32) -> Result<(), Error>
     {
+        // Use diffreent extension or text based and binary events.
         let extension = match event.as_ref()
         {
             Event::Binary(_,_) => "bin",
             Event::Text(_,_) => "txt"
         };        
 
+        // Open a new file for the events
         let file_path = format!("{}\\{}_{}.{}", self.path, id, event.source(), extension);
         let file = OpenOptions::new().write(true).create(true).truncate(true).open(file_path).await?;
+        
+        // Write the content of event to the file
         let mut writer = BufWriter::with_capacity(BUFFER_CAPACITY, file);
         let buf = match event.as_ref()
         {
@@ -56,7 +63,7 @@ impl FileStorageIterator
 {
     pub fn new(path: String) -> Self
     {        
-        Self { read_dir: std::fs::read_dir(path).unwrap() }
+        Self { read_dir: std::fs::read_dir(path).expect("Error while redaing storage folder.") }
     }
 }
 
@@ -82,10 +89,10 @@ impl Iterator for FileStorageIterator {
                     Ok( (id, Arc::new(Event::Text(source, content))))
                 },
                 "bin" => {
-                    let content = std::fs::read(path).unwrap();
+                    let content = std::fs::read(path)?;
                     Ok( (id, Arc::new(Event::Binary(source, content))))
                 }
-                _ => Err(Error { message: "Invalid file extension".into() })
+                _ => Err(Error::new( "Invalid file extension"))
             }
             })
     }

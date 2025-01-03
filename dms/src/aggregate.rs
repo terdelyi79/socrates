@@ -1,11 +1,9 @@
+use crate::{entities::*, persistent_objects::*};
+use socrates::error::Error;
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
-
-use socrates::error::Error;
-
-use crate::{entities::*, persistent_objects::*};
 
 pub struct Aggregate {
     all_folders: HashMap<u32, Arc<RwLock<FolderEntity>>>,
@@ -19,40 +17,32 @@ impl Aggregate {
             name: "root".into(),
             parent_id: 0,
         })));
+        let mut all_folders = HashMap::new();
+        all_folders.insert(0, root_folder.clone());
         Aggregate {
-            all_folders: HashMap::new(),
+            all_folders,
             root_folder,
         }
     }
 
     pub fn create_folder(&mut self, folder: Folder) -> Result<(), Error> {
-        
         let id = folder.id;
         let parent_id = folder.parent_id;
         let folder_entity = Arc::new(RwLock::new(FolderEntity::new(folder)));
 
         self.all_folders.insert(id, folder_entity.clone());
 
-        let parent_folder = if parent_id != 0 {
-            self.all_folders
-                .get(&parent_id)
-                .ok_or(Error {message: "Parent folder was not found".into()})
-        } else {
-            Ok(&self.root_folder)
-        }?;
+        let parent_folder = self.all_folders.get(&parent_id).ok_or(Error::new( "Parent folder was not found"))?;
 
-        let mut parent_folder = parent_folder.write().unwrap();
+        let mut parent_folder = parent_folder.write().expect("Error while locking folder");
         parent_folder.sub_folders.push(folder_entity);
 
         Ok(())
     }
 
     pub fn create_file(&mut self, file: File) -> Result<(), Error> {
-        let parent_folder = self
-            .all_folders
-            .get(&file.folder_id)
-            .ok_or(Error {message: "Parent folder was not found".into()})?;
-        let mut parent_folder = parent_folder.write().unwrap();
+        let parent_folder = self.all_folders.get(&file.folder_id).ok_or(Error::new( "Parent folder was not found"))?;
+        let mut parent_folder = parent_folder.write().expect("Error while locking file");
         parent_folder.files.push(file);
 
         Ok(())

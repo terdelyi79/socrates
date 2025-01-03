@@ -14,21 +14,21 @@ use crate::aggregate::Aggregate;
 pub struct DmsApi {}
 
 impl DmsApi {
-    pub async fn run<S>(storage: S) -> Result<(), Error>
+    pub async fn listen<S>(storage: S, address: SocketAddr) -> Result<(), Error>
     where
         S: Storage + 'static,
     {
         let sink = Sink::new(storage, Aggregate::default());
 
         let mut api = Api::new(sink);
-        api.add_command("CreateCategory", Box::new(Self::create_folder))
+        api.add_command("CreateFolder", Box::new(Self::create_folder))
             .await;
-        api.add_command("CreateContact", Box::new(Self::create_file))
+        api.add_command("CreateFile", Box::new(Self::create_file))
             .await;
-        api.add_query("GetCategorizedContacts", Box::new(Self::get_folder_tree))
+        api.add_query("GetFolderTree", Box::new(Self::get_folder_tree))
             .await;
-
-        api.run(SocketAddr::from(([127, 0, 0, 1], 7777))).await
+        
+        api.listen(address).await
     }
 
     // ********************************* Commands ********************************* //
