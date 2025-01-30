@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Socrates specific error type
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Error {
     pub message: String,
 }

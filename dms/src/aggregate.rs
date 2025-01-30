@@ -5,6 +5,8 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+
+#[derive(Clone)]
 pub struct Aggregate {
     all_folders: HashMap<u32, Arc<RwLock<FolderEntity>>>,
     root_folder: Arc<RwLock<FolderEntity>>,

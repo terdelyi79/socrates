@@ -8,6 +8,7 @@ use crate::{error::Error, event::Event, storage::Storage};
 pub type Command<A> = Box<fn(&Event, &mut A) -> Result<(), Error>>;
 
 /// Receives events and calls registered commands to update the aggregate
+#[derive(Clone)]
 pub struct Sink<S: Storage + Send + Sync, A: Send + Sync>
 where
     Self: Send + Sync,
@@ -20,13 +21,18 @@ where
 
 impl<S: Storage + Send + Sync, A: Send + Sync> Sink<S, A> {
     /// Create a new sink
-    pub fn new(storage: S, aggregate: A) -> Self {
-        Self {
+    pub async fn new(storage: S, aggregate: A, init_commands: &'static dyn Fn(&mut Self)) -> Result<Self, Error> {
+        let mut sink = Self {
             storage,
             aggregate: Arc::new(RwLock::new(aggregate)),
             handlers: HashMap::new(),
             last_id: 0,
-        }
+        };
+
+        init_commands(&mut sink);
+        sink.init().await?;
+
+        Ok(sink)
     }
 
     /// Add a command as an event handler for a specific event type
@@ -63,8 +69,13 @@ impl<S: Storage + Send + Sync, A: Send + Sync> Sink<S, A> {
         Ok(())
     }
 
-    /// Get the aggregate
+    pub async fn run_query<T>(&self, query: &'static dyn Fn(&A) -> T) -> T {        
+        let aggregate = self.aggregate.read().await;
+        query(&aggregate)
+    }
+
     pub fn aggregate(&self) -> Arc<RwLock<A>> {
         self.aggregate.clone()
     }
+    
 }

@@ -5,6 +5,7 @@ use crate::{error::Error, event::Event, storage::Storage};
 const BUFFER_CAPACITY: usize = 1000000;
 
 /// A basic storage implementation of development and demonstrations only.
+#[derive(Clone)]
 pub struct FileSystemStorage
 {
     path: String

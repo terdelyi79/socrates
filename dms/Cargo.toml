@@ -5,5 +5,6 @@ edition = "2021"
 
 [dependencies]
 socrates = { path = "../socrates" }
-tokio = { version= "1.42.0", features = ["full"] }
-serde = { version = "1.0.216" , features = ["derive", "rc"] }
+tokio = { version= "1.43.0", features = ["full"] }
+serde = { version = "1.0.217" , features = ["derive", "rc"] }
+axum = "0.8.1"
